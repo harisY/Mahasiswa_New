@@ -1,0 +1,280 @@
+﻿@using Mahasiswa_New.Models
+@{
+    ViewBag.Title = "JURUSAN";
+}
+<hr />
+<div id="MainForm">
+    <div id="tablegrid">
+        @Html.Partial("Partial/_ListJurusan")
+    </div>
+</div>
+
+<div class="modal fade" id="_popUp" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content  panel panel-primary">
+            <div class="panel-heading">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h2 class="modal-title" id="_title"></h2>
+            </div>
+            <div class="modal-body">
+                <h4 style="color:red;" class="hidden" id="_delConfirm">Are your sure delete this data?</h4>
+                <div class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-3 col-md-4 control-label text-muted" style="text-align:left;">Id Jurusan</label>
+                        <label class="col-sm-1 col-md-1 control-label text-muted ">:</label>
+                        <div class="col-sm-8 col-md-7">
+                            <input id="_inputState" class="form-control hidden" />
+                            <input id="_id" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 col-md-4 control-label text-muted" style="text-align:left;">Jurusan</label>
+                        <label class="col-sm-1 col-md-1 control-label text-muted ">:</label>
+                        <div class="col-sm-8 col-md-7">
+                            <input id="_jurusan" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" id="_saveBtn" class="btn btn-primary" onclick="return ProsesData()"><span class="bold fa fa-save"></span>&nbsp;&nbsp;Save</button>&nbsp;
+                <button type="button" class="btn btn-default" data-dismiss="modal"><span class="bold fa fa-times"></span>&nbsp;&nbsp;Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section scripts{
+    <script>
+        $(document).ready(function () {
+            DataTable();
+        })
+        var Id;
+        var Jurusan;
+
+        function Init() {
+            Id = "";
+            Jurusan = "";
+        }
+        //komentar
+        function DataTable() {
+            $('#table').DataTable({
+                "paging": true,
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false
+            });
+        }
+        toastr.options = {
+            "positionClass": "toast-top-center",
+            "timeOut": "1000",
+            "preventDuplicates": true
+        }
+
+        function CreatePopUp() {
+            Init();
+            $("#_popUp").modal({ backdrop: 'static' });
+            $("#_title").text("Create Jurusan");
+            $("#_inputState").val("Create");
+            $("#_id").val("");
+            $("#_jurusan").val("");
+
+            $("#_id").removeAttr("disabled");
+            $("#_jurusan").removeAttr("disabled");
+            $("#_delConfirm").addClass("hidden");
+            $("#_saveBtn").removeClass("hidden");
+            $("#_id").focus();
+        }
+
+        function EditPopUp(data) {
+            Init();
+            $("#_popUp").modal({ backdrop: 'static' });
+            $('#_title').text("Edit Jurusan");
+            var Id = data.closest("tr").find("._id").text();
+            var Jurusan = data.closest("tr").find("._jurusan").text();
+            $("#_inputState").val("Edit");
+            $("#_id").val(Id);
+            $("#_jurusan").val(Jurusan);
+            $("#_jurusan").focus();
+
+            $("#_id").attr("disabled", "disabled");
+            $("#_jurusan").removeAttr("disabled", "disabled");
+            $("#_delConfirm").addClass("hidden");
+            $("#_saveBtn").removeClass("hidden");
+        }
+
+        function DetailPopUp(data) {
+            $("#_popUp").modal({ backdrop: 'static' });
+            $('#_title').text("Detail Jurusan");
+            var Id = data.closest("tr").find("._id").text();
+            var Jurusan = data.closest("tr").find("._jurusan").text();
+            $("#_inputState").val("Detail");
+            $("#_id").val(Id);
+            $("#_jurusan").val(Jurusan);
+            $("#_id").attr("disabled", "disabled");
+            $("#_jurusan").attr("disabled", "disabled");
+            $("#_delConfirm").addClass("hidden");
+            $("#_saveBtn").addClass("hidden");
+        }
+
+        function DeletePopUp(data) {
+            $("#_popUp").modal({ backdrop: 'static' });
+            $('#_title').text("Delete Jurusan");
+            var Id = data.closest("tr").find("._id").text();
+            var Jurusan = data.closest("tr").find("._jurusan").text();
+            $("#_inputState").val("Delete");
+            $("#_id").val(Id);
+            $("#_jurusan").val(Jurusan);
+
+            $("#_id").attr("disabled", "disabled");
+            $("#_jurusan").attr("disabled", "disabled");
+            $("#_delConfirm").removeClass("hidden");
+            $("#_saveBtn").removeClass("hidden");
+        }
+
+        function ProsesData() {
+            var InputState = $('#_inputState').val();
+            Id = $("#_id").val();
+            Jurusan = $('#_jurusan').val();
+            if (InputState == "Create") {
+                if (Id == "") {
+                    $("#_id").focus();
+                    alert("Id tidak boleh kosong.");
+                    toastr.warning("Id tidak boleh kosong.")
+                } else {
+                    $.ajax({
+                        type: "POST",
+                        url: '@Url.Action("ValidasiCreate", "Jurusan")',
+                        data: {
+                            Id: Id
+                        },
+                        complete: function (result) {
+                            if (result.responseText == "True") {
+                                toastr.warning('Data sudah ada mohon periksa ulang')
+                                $("#_id").focus();
+                            }
+                            else {
+                                Create();
+                                Init();
+                            }
+                        },
+                    });
+                }
+            } else if (InputState == "Edit") {
+                Edit();
+                Init();
+            } else if (InputState == "Delete") {
+                Delete();
+                Init();
+            }
+
+        }
+
+        function Create() {
+            if (Jurusan == "") {
+                $("#_jurusan").focus();
+                toastr.warning("Jurusan tidak boleh kosong.")
+            }
+            else {
+                var model = {
+                    idJurusan: Id,
+                    jurusan : Jurusan
+                }
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("Create", "Jurusan")',
+                    data: {
+                        model : model
+                    },
+                    complete: function (result) {
+                        $("#tablegrid").html(result.responseText);
+                        toastr.success("Simpan data berhasil.")
+                        $("#_popUp").modal('hide');
+                        return DataTable();
+                    },
+                });
+            }
+        }
+
+        function ValidasiEdit() {
+            var Id = $("#_idEdit").val();
+            var Jurusan = $("#_jurusanEdit").val();
+            if (Name == NameHidden) {
+                Edit();
+            }
+            else {
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("ValidasiRecipe", "Jurusan")',
+                    data: {
+                        Id: Id
+                    },
+                    complete: function (result) {
+                        if (result.responseText == "True") {
+                            toastr.warning('Data sudah ada mohon periksa ulang')
+                            $("#_jurusanEdit").focus();
+                        }
+                        else {
+                            Edit();
+                        }
+                    },
+                });
+            }
+        }
+
+        function Edit() {
+            if (Id == "") {
+                $("#_id").focus();
+                toastr.warning("Tidak ada data yang diupdate.")
+            }
+            else if (Jurusan == "") {
+                $("#_jurusan").focus();
+                toastr.warning("Jurusan tidak boleh kosong.")
+            } else {
+                var model = {
+                    Id: Id,
+                    Jurusan: Jurusan
+                }
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("Edit", "Jurusan")',
+                    data: {
+                        model : model
+                    },
+                    complete: function (result) {
+                        $("#tablegrid").html(result.responseText);
+                        toastr.success("Update data berhasil.")
+                        $("#_popUp").modal('hide');
+                        return DataTable();
+                    },
+                });
+            }
+        }
+
+        function Delete() {
+            if (Id == "") {
+                toastr.warning("Tidak ada data yang dihapus.")
+            }
+            else {
+                $.ajax({
+                    type: "POST",
+                    url: '@Url.Action("Delete", "Jurusan")',
+                    data: {
+                        Id: Id
+                    },
+                    complete: function (result) {
+                        $("#tablegrid").html(result.responseText);
+                        toastr.success("Hapus data berhasil.")
+                        $("#_popUp").modal('hide');
+                        return DataTable();
+                    },
+                });
+            }
+        }
+    </script>
+}
+
+
